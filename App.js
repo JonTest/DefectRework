@@ -4,22 +4,36 @@ Ext.define('DefectTrendRemixedApp', {
 
     launch: function() {
       Ext.create('Rally.data.lookback.SnapshotStore', {
-          autoLoad: true,
-          listeners: {
-            load: function(store, data, success) {
-                console.log('Loaded Data', data);
-            }
+        context: {
+          workspace: '/workspace/41529001',
+          projectScopeUp: false,
+          projectScopeDown: false
         },
-        fetch: ['Name', 'State', 'Owner'],
+        autoLoad: true,
+        listeners: {
+          load: function(store, data, success) {
+            var collect = {};
+            Ext.Array.forEach(data, function() {
+            });
+          }
+        },
+        hydrate: ['Project','State'],
+        fetch: ['FormattedID', '_UnformattedID', 'Project', 'Name', 'State', 'Owner'],
         filters: [
-            {
-                property: '_TypeHierarchy',
-                operator: 'in',
-                value: ['Defect']
-            }
-        ]
-    });
+          {
+              property: '_TypeHierarchy',
+              operator: 'in',
+              value: ['Defect']
+          },
+          {
+              property: 'Project',
+              operator: 'in',
+              value: 280784858
+          }
 
-}});
+        ]
+      });
+    }
+});
     
 

@@ -12,9 +12,38 @@
                 componentCls: 'app',
             
                 launch: function() {
-                    //Write app code here
+                  Ext.create('Rally.data.lookback.SnapshotStore', {
+                    context: {
+                      workspace: '/workspace/41529001',
+                      projectScopeUp: false,
+                      projectScopeDown: false
+                    },
+                    autoLoad: true,
+                    listeners: {
+                      load: function(store, data, success) {
+                          console.log('Loaded Data', data);
+                      }
+                    },
+                    hydrate: ['Project','State'],
+                    fetch: ['FormattedID', '_UnformattedID', 'Project', 'Name', 'State', 'Owner'],
+                    filters: [
+                      {
+                          property: '_TypeHierarchy',
+                          operator: 'in',
+                          value: ['Defect']
+                      },
+                      {
+                          property: 'Project',
+                          operator: 'in',
+                          value: 280784858
+                      }
+            
+                    ]
+                  });
                 }
             });
+                
+            
 
             Rally.launchApp('DefectTrendRemixedApp', {
                 name: 'DefectTrendRemixed'

@@ -12,9 +12,9 @@ Ext.define('DefectTrendRemixedApp', {
         autoLoad: true,
         listeners: {
           load: function(store, data, success) {
-            var collect = {};
-            Ext.Array.forEach(data, function() {
-            });
+            var uniqueDefects = store.collect("_UnformattedID", false, true);
+            console.log('Total:', store.count());
+            console.log('Unique:', uniqueDefect.length);
           }
         },
         hydrate: ['Project','State'],
@@ -27,10 +27,19 @@ Ext.define('DefectTrendRemixedApp', {
           },
           {
               property: 'Project',
-              operator: 'in',
+              operator: '=',
               value: 280784858
+          },
+          {
+              property: '_PreviousValues.State',
+              operator: 'eq',
+              value: 'Closed' 
+          },
+          {
+              property: 'State',
+              operator: 'lte',
+              value: 'Closed' 
           }
-
         ]
       });
     }

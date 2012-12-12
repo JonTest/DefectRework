@@ -21,7 +21,9 @@
                     autoLoad: true,
                     listeners: {
                       load: function(store, data, success) {
-                          console.log('Loaded Data', data);
+                        var uniqueDefects = store.collect("_UnformattedID", false, true);
+                        console.log('Total:', store.count());
+                        console.log('Unique:', uniqueDefect.length);
                       }
                     },
                     hydrate: ['Project','State'],
@@ -34,10 +36,19 @@
                       },
                       {
                           property: 'Project',
-                          operator: 'in',
+                          operator: '=',
                           value: 280784858
+                      },
+                      {
+                          property: '_PreviousValues.State',
+                          operator: 'eq',
+                          value: 'Closed' 
+                      },
+                      {
+                          property: 'State',
+                          operator: 'lte',
+                          value: 'Closed' 
                       }
-            
                     ]
                   });
                 }

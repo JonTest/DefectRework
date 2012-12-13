@@ -30,6 +30,7 @@ Ext.define('DefectTrendRemixedApp', {
             console.log('Total:', store.count());
             console.log('Unique:', uniqueDefects.length);
             this.down('#bigNumber').update(uniqueDefects.length);
+            Ext.resumeLayouts(true);
           }
         },
         
@@ -66,6 +67,7 @@ Ext.define('DefectTrendRemixedApp', {
     }, // End _updateReworkcount
       
     launch: function() {
+        Ext.suspendLayouts();
         this.add([
         {
           xtype: 'container',
@@ -94,30 +96,45 @@ Ext.define('DefectTrendRemixedApp', {
           listeners: {
             scope: this,
             afterrender: function(cmp) {
-              cmp.s30.addCls('selected');
-              cmp.s30.on('click', function(eventObj) {
-                            console.log(30);
-                            this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
-                            this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                            this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._updateReworkCount(DefectTrendRemixedApp.ThirtyDaysBack);
+                // set defaults for initial loading
+                cmp.s30.addCls('selected');
+                cmp.s60.addCls('notselected');
+                cmp.s90.addCls('notselected');
+              
+              // click event handlers
+                cmp.s30.on('click', function(eventObj) {
+                    //select the "30" label, deselect the other labels
+                    //check to see if 30 is already the enabled label, is so just no-op
+                    if(this.down("#daySelection").s30.hasCls('selected') ){
+                        return;
+                    }
+                    console.log(30); 
+                    // update labels appropriately
+                    this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+                    this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                    this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                    this._updateReworkCount(DefectTrendRemixedApp.ThirtyDaysBack);
               }, this );
               
-              cmp.s60.addCls('notselected');
               cmp.s60.on('click', function() {
+                 if(this.down("#daySelection").s60.hasCls('selected')){
+                        return;
+                 }
                 console.log('60', this);
-                            this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
-                            this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-                            this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this._updateReworkCount(DefectTrendRemixedApp.SixtyDaysBack);
               }, this);
               
-              cmp.s90.addCls('notselected');
               cmp.s90.on('click', function() {
+                  if(this.down("#daySelection").s90.hasCls('selected')) {
+                      return;
+                  }
                 console.log('90');
-                            this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
-                            this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                            this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this._updateReworkCount(DefectTrendRemixedApp.NinetyDaysBack);
               }, this);
             }

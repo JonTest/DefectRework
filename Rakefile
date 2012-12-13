@@ -879,6 +879,7 @@ JAVASCRIPT_BLOCK
     <title>APP_TITLE</title>
 
     <script type="text/javascript" src="APP_SDK_PATH"></script>
+<link href='http://fonts.googleapis.com/css?family=Carter+One|Leckerli+One' rel='stylesheet' type='text/css'>
 
     <script type="text/javascript">
         Rally.onReady(function() {
@@ -905,6 +906,8 @@ STYLE_BLOCK
     <title>APP_TITLE</title>
 
     <script type="text/javascript" src="APP_SDK_PATH"></script>
+<link href='http://fonts.googleapis.com/css?family=Carter+One|Leckerli+One' rel='stylesheet' type='text/css'>
+
 
     <script type="text/javascript">
         Rally.onReady(function() {

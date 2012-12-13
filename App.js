@@ -3,22 +3,26 @@ Ext.define('DefectTrendRemixedApp', {
     componentCls: 'app',
 
     launch: function() {
+
       Ext.create('Rally.data.lookback.SnapshotStore', {
         context: {
-          workspace: '/workspace/41529001',
+          workspace: '/workspace/41529001',   // FIXME - scope
           projectScopeUp: false,
           projectScopeDown: false
         },
         autoLoad: true,
         listeners: {
           load: function(store, data, success) {
+            console.log(data);
+
             var uniqueDefects = store.collect("_UnformattedID", false, true);
             console.log('Total:', store.count());
-            console.log('Unique:', uniqueDefect.length);
+            console.log('Unique:', uniqueDefects.length);
+
           }
         },
-        hydrate: ['Project','State'],
-        fetch: ['FormattedID', '_UnformattedID', 'Project', 'Name', 'State', 'Owner'],
+        hydrate: ['State', '_PreviousValues'],
+        fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
         filters: [
           {
               property: '_TypeHierarchy',
@@ -31,15 +35,16 @@ Ext.define('DefectTrendRemixedApp', {
               value: 280784858
           },
           {
-              property: '_PreviousValues.State',
-              operator: 'eq',
-              value: 'Closed' 
+              property: 'State',
+              operator: '<',
+              value: 'Closed'
           },
           {
-              property: 'State',
-              operator: 'lte',
+              property: '_PreviousValues.State',
+              operator: '=',
               value: 'Closed' 
           }
+
         ]
       });
     }

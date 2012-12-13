@@ -24,7 +24,7 @@ Ext.define('DefectTrendRemixedApp', {
          listeners: {
             scope: this,
             load: function(store, data, success) {
-            console.log(data);
+            console.log("Data", data);
 
             var uniqueDefects = store.collect("_UnformattedID", false, true);
             console.log('Total:', store.count());
@@ -124,6 +124,18 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                /* FIXME - need to re-enable opacity on load
+                this.down("#bigNumber").animate({
+                  duration: 2000,
+                  keyframes: {
+                    25: { opacity: 50 },
+                    50: { opacity: 25 },
+                    75: { opacity: 15 },
+                    100: { opacity: 0 }
+                  }
+                });
+                */
+
                 this._updateReworkCount(DefectTrendRemixedApp.SixtyDaysBack);
               }, this);
               

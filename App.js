@@ -15,8 +15,10 @@ Ext.define('DefectTrendRemixedApp', {
     
     // define items inside "outmost" app container
       _updateReworkCount: function(daysShift) {
-         var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysShift);
-         var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
+        // send message out to any apps listening so they can update themselves
+        Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', daysShift);
+        var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysShift);
+        var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
 
          Ext.create('Rally.data.lookback.SnapshotStore', {
          context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context

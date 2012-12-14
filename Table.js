@@ -19,10 +19,9 @@ Ext.define('DefectTrendRemixedApp', {
     // key'd by the unique defect id.
     _bucketData: function(defectSnapshotStore) {
         console.log('foo', defectSnapshotStore);
-        var uniqueDefects = defectSnapshotStore.collect("_UnformattedID", false, true);
+        var uniqueDefects = defectSnapshotStore.collect("ObjectID", false, true);
         console.log('# Unique:', uniqueDefects.length);
         this.indivDefects = {};
-        console.log(this.indevDefects);
 
         // prime unique entries for each defect, seeding empty storage for snapshots
         Ext.Array.each(uniqueDefects, function(defect) {
@@ -31,7 +30,7 @@ Ext.define('DefectTrendRemixedApp', {
         }, this);
         // loop through all (e.g. 100) snapshots and filter/push into data structure
         defectSnapshotStore.each(function(snapshot) {
-          this.indivDefects[snapshot.get("_UnformattedID")].snapshots.push(snapshot);
+          this.indivDefects[snapshot.get("ObjectID")].snapshots.push(snapshot);
         }, this);
         
         this._fetchWholeDefects();
@@ -60,14 +59,23 @@ Ext.define('DefectTrendRemixedApp', {
         
         Ext.create('Rally.data.WsapiDataStore', {
             model: 'Defect',
-            fetch: ['Name, State, _ref'],
-            filters: defectQueryFilter,
+            fetch: ['Name', 'State', '_ref','FormattedID'],
+            autoLoad: true,
+            filters: [defectQueryFilter],
             listeners: {
+                scope: this,
                 load: function(store, data, success) {
-                    //TODO load state, name, url
+                    Ext.Array.each(data, function(defect) {
+                        console.log('defect obj id ', defect.get('ObjectID'));
+                        this.indivDefects[defect.get('ObjectID')].Name = defect.get('Name');
+                        this.indivDefects[defect.get('ObjectID')].State = defect.get('State');
+                        this.indivDefects[defect.get('ObjectID')]._ref = defect.get('_ref');
+                        this.indivDefects[defect.get('ObjectID')].FormattedID = defect.get('FormattedID')
+                    }, this);
+                    this._loadGrid();
                 } //End load
             }  // End listeners     
-          }); // End Ext.Create 
+          }); // End Ext.Create ;
         }, // End _fetchWholeDefects
     
     _loadData: function(daysShift) {
@@ -122,19 +130,29 @@ Ext.define('DefectTrendRemixedApp', {
         }); //End EXT.create 
 
     }, // End _loadData
-    _loadGrid: function(metaArray){
+    
+    _loadGrid: function(){
+        var gridData = [];
+        for(defect in this.indivDefects) {
+            var defectMeta = this.indivDefects[defect]; // move data from complex object to simple array
+            gridData.push(defectMeta);
+        }
          var customStore = Ext.create('Rally.data.custom.Store', {
-             data: metaArray
+             data: gridData,
          } );
          this.add({
             xtype: 'rallygrid',
             store: customStore,
             columnCfgs: [
+                {   
+                    text: 'Defect ID', dataIndex: 'FormattedID', flex: 1,
+                    xtype: 'templatecolumn', tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                },
                 {
                     text: 'Name', dataIndex: 'Name', flex: 1
                 },
                 {
-                    text: 'State', dataIndex: 'State'
+                    text: 'State', dataIndex: 'State', flex: 1
                 }
             ]
         });

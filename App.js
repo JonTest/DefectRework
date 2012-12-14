@@ -14,8 +14,9 @@ Ext.define('DefectTrendRemixedApp', {
 
     
     // define items inside "outmost" app container
-      _updateReworkCount: function(daysShift) {
+      _loadData: function(daysShift) {
         // send message out to any apps listening so they can update themselves
+        console.log( 'daysShift =', daysShift);
         Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', daysShift);
         var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysShift);
         var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
@@ -89,7 +90,50 @@ Ext.define('DefectTrendRemixedApp', {
           }
         ] // End filters
       }); //End EXT.create
-    }, // End _updateReworkcount
+    }, // End _loadData
+    
+    _onDaysBackChanged: function(daysShift, sender) {
+
+      // prevent consuming own messages
+      if (sender === this) {
+        console.log("Message received from myself");
+        return;
+      }
+
+      // REFACTOR: copied; need to share
+      if (daysShift == -30) {
+        //select the "30" label, deselect the other labels
+        //check to see if 30 is already the enabled label, is so just no-op
+        if(this.down("#daySelection").s30.hasCls('selected') ){
+            return;
+        }
+        console.log(30); 
+        // update labels appropriately
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+      } else if (daysShift == -60) {
+         if(this.down("#daySelection").s60.hasCls('selected')){
+                return;
+         }
+        console.log('60', this);
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+
+        this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+      } else if (daysShift == -90) {
+        if(this.down("#daySelection").s90.hasCls('selected')) {
+              return;
+          }
+        console.log('90');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+      }
+    },
       
     launch: function() {
         this.add([
@@ -144,7 +188,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
 
-                this._updateReworkCount(DefectTrendRemixedApp.ThirtyDaysBack);
+                this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
 
               }, this );
               
@@ -156,7 +200,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._updateReworkCount(DefectTrendRemixedApp.SixtyDaysBack);
+                this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
 
               }, this);
               
@@ -168,7 +212,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._updateReworkCount(DefectTrendRemixedApp.NinetyDaysBack);
+                this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
               }, this);
             }
           },
@@ -179,7 +223,8 @@ Ext.define('DefectTrendRemixedApp', {
           }
         }
       ]);
-        this._updateReworkCount( -30);
+        this._loadData( -30);
+        Rally.environment.getMessageBus().subscribe('DefectTrendRemixedApp.daysShifted', this._onDaysBackChanged, this);
     }
 });
     

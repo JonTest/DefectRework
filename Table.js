@@ -18,9 +18,12 @@ Ext.define('DefectTrendRemixedApp', {
 
       this._initGrid();
       this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
-
+      Rally.environment.getMessageBus().subscribe('DefectTrendRemixedApp.daysShifted', this._onDaysBackChanged, this);
     },
 
+    _onDaysBackChanged: function(value) {
+      console.log("GOT ", value);
+    },
     // for every element in the store (e.g. 100), slot it into a data structure
     // key'd by the unique defect id.
     _bucketData: function(defectSnapshotStore) {

@@ -1,11 +1,4 @@
 
-/*
-    1) fetch snapshots
-    2) org data
-      * [model] bucketize by defects -> [snapshots]
-      * [view] transform / calculate (storage for grid)
-    3) wire up grid with the view data
-*/
 
 Ext.define('DefectTrendRemixedApp', {
     extend: 'Rally.app.App',
@@ -22,6 +15,7 @@ Ext.define('DefectTrendRemixedApp', {
     indivDefects: null,
 
     launch: function() {
+
       this._initGrid();
       this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
 
@@ -155,9 +149,16 @@ Ext.define('DefectTrendRemixedApp', {
        } );
 
         // find & populate grid
-        this.down('#defectGrid').reconfigure(customStore);
+       this.down('#defectGrid').reconfigure(customStore);
+        
+        // grid layout hidden on load to prevent showing empty grid and waiting few secs to get data
+        // this will re-enable and show the first grid with data
+        Ext.resumeLayouts(true);
     },
     _initGrid: function(){
+
+      // prevent rendering grid until first data is retrieved and given to grid
+      Ext.suspendLayouts();
 
       // Add 30/60/90 links
       this.add(
@@ -250,13 +251,14 @@ Ext.define('DefectTrendRemixedApp', {
                   xtype: 'templatecolumn', tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
               },
               {
-                  text: 'Name', dataIndex: 'Name', flex: 1
+                  text: 'Name', dataIndex: 'Name', flex: 2
               },
               {
                   text: 'State', dataIndex: 'State', flex: 1
               }
           ]
       });
+
     } //End _loadGrid
 });
 

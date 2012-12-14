@@ -23,19 +23,37 @@ Ext.define('DefectTrendRemixedApp', {
          autoLoad: true, 
          listeners: {
             scope: this,
-            load: function(store, data, success) {
-            console.log("Data", data);
+            beforeload: function(store, data, success) {
+                this.down("#bigNumberAndText").animate({
+                  duration: 1000,
+                  to: {
+                    opacity: 0
+                  }
+                });
 
-            var uniqueDefects = store.collect("_UnformattedID", false, true);
-            console.log('Total:', store.count());
-            console.log('Unique:', uniqueDefects.length);
-            this.down('#bigNumber').update(uniqueDefects.length);
-            var displayText = 'Reworked Defect'
-            if (uniqueDefects.length > 1) {
-              displayText += "s"
-            }
-            this.down('#bigNumberText').update(displayText);
-            Ext.resumeLayouts(true);
+
+            },
+            load: function(store, data, success) {
+
+              var uniqueDefects = store.collect("_UnformattedID", false, true);
+              console.log('Total:', store.count(),'Unique:', uniqueDefects.length, 'Data:', data);
+
+              this.down('#bigNumber').update(uniqueDefects.length);
+
+              var displayText = 'Reworked Defect'
+              if (uniqueDefects.length > 1) {
+                displayText += "s"
+              }
+              this.down('#bigNumberText').update(displayText);
+              Ext.resumeLayouts(true);
+
+              this.down("#bigNumberAndText").animate({
+                duration: 1000,
+                to: {
+                  opacity: 100
+                }
+              });
+
           }
         },
         
@@ -72,24 +90,30 @@ Ext.define('DefectTrendRemixedApp', {
     }, // End _updateReworkcount
       
     launch: function() {
-        Ext.suspendLayouts();
         this.add([
         {
           xtype: 'container',
-          itemId: 'bigNumber',
-          componentCls: 'reworkCountNumber',
-          style: {
-            textAlign: 'center'
-          }
+          itemId: 'bigNumberAndText',
+          items: [
+            {
+              xtype: 'container',
+              itemId: 'bigNumber',
+              componentCls: 'reworkCountNumber',
+              style: {
+                textAlign: 'center'
+              }
+            },
+            {
+              xtype: 'container',
+              itemId: 'bigNumberText',
+              componentCls: 'reworkCountText',
+              style: {
+                textAlign: 'center'
+              }
+            }
+          ]
         },
-        {
-          xtype: 'container',
-          itemId: 'bigNumberText',
-          componentCls: 'reworkCountText',
-          style: {
-            textAlign: 'center'
-          }
-        },
+
         {
           // Turns free-form text (e.g. 30days) into bonafide Ext objects 
           // to which we can inherit tons-o-methods
@@ -106,18 +130,20 @@ Ext.define('DefectTrendRemixedApp', {
                 cmp.s90.addCls('notselected');
               
               // click event handlers
-                cmp.s30.on('click', function(eventObj) {
-                    //select the "30" label, deselect the other labels
-                    //check to see if 30 is already the enabled label, is so just no-op
-                    if(this.down("#daySelection").s30.hasCls('selected') ){
-                        return;
-                    }
-                    console.log(30); 
-                    // update labels appropriately
-                    this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
-                    this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                    this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                    this._updateReworkCount(DefectTrendRemixedApp.ThirtyDaysBack);
+              cmp.s30.on('click', function(eventObj) {
+                //select the "30" label, deselect the other labels
+                //check to see if 30 is already the enabled label, is so just no-op
+                if(this.down("#daySelection").s30.hasCls('selected') ){
+                    return;
+                }
+                console.log(30); 
+                // update labels appropriately
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+
+                this._updateReworkCount(DefectTrendRemixedApp.ThirtyDaysBack);
+
               }, this );
               
               cmp.s60.on('click', function() {
@@ -128,19 +154,8 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                /* FIXME - need to re-enable opacity on load
-                this.down("#bigNumber").animate({
-                  duration: 2000,
-                  keyframes: {
-                    25: { opacity: 50 },
-                    50: { opacity: 25 },
-                    75: { opacity: 15 },
-                    100: { opacity: 0 }
-                  }
-                });
-                */
-
                 this._updateReworkCount(DefectTrendRemixedApp.SixtyDaysBack);
+
               }, this);
               
               cmp.s90.on('click', function() {

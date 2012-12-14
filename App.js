@@ -30,6 +30,11 @@ Ext.define('DefectTrendRemixedApp', {
             console.log('Total:', store.count());
             console.log('Unique:', uniqueDefects.length);
             this.down('#bigNumber').update(uniqueDefects.length);
+            var displayText = 'Reworked Defect'
+            if (uniqueDefects.length > 1) {
+              displayText += "s"
+            }
+            this.down('#bigNumberText').update(displayText);
             Ext.resumeLayouts(true);
           }
         },
@@ -81,7 +86,6 @@ Ext.define('DefectTrendRemixedApp', {
           xtype: 'container',
           itemId: 'bigNumberText',
           componentCls: 'reworkCountText',
-          html: 'Reworked Defects',
           style: {
             textAlign: 'center'
           }

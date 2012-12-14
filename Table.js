@@ -21,8 +21,46 @@ Ext.define('DefectTrendRemixedApp', {
       Rally.environment.getMessageBus().subscribe('DefectTrendRemixedApp.daysShifted', this._onDaysBackChanged, this);
     },
 
-    _onDaysBackChanged: function(value) {
-      console.log("GOT ", value);
+    _onDaysBackChanged: function(daysShift, sender) {
+
+      // prevent consuming own messages
+      if (sender === this) {
+        return;
+      }
+
+      // REFACTOR: copied; need to share
+      if (daysShift == -30) {
+        //select the "30" label, deselect the other labels
+        //check to see if 30 is already the enabled label, is so just no-op
+        if(this.down("#daySelection").s30.hasCls('selected') ){
+            return;
+        }
+        console.log(30); 
+        // update labels appropriately
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+      } else if (daysShift == -60) {
+         if(this.down("#daySelection").s60.hasCls('selected')){
+                return;
+         }
+        console.log('60', this);
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+
+        this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+      } else if (daysShift == -90) {
+        if(this.down("#daySelection").s90.hasCls('selected')) {
+              return;
+          }
+        console.log('90');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+      }
     },
     // for every element in the store (e.g. 100), slot it into a data structure
     // key'd by the unique defect id.
@@ -203,23 +241,12 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                /* FIXME - need to re-enable opacity on load
-                this.down("#bigNumber").animate({
-                  duration: 2000,
-                  keyframes: {
-                    25: { opacity: 50 },
-                    50: { opacity: 25 },
-                    75: { opacity: 15 },
-                    100: { opacity: 0 }
-                  }
-                });
-                */
 
                 this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
               }, this);
               
               cmp.s90.on('click', function() {
-                  if(this.down("#daySelection").s90.hasCls('selected')) {
+                if(this.down("#daySelection").s90.hasCls('selected')) {
                       return;
                   }
                 console.log('90');

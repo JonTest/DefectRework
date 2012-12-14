@@ -10,9 +10,94 @@
 Ext.define('DefectTrendRemixedApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
+    statics: {
+        ThirtyDaysBack: -30,
+        SixtyDaysBack: -60,
+        NinetyDaysBack: -90
+    },
+    layout: {
+      type: 'vbox',
+      align: 'stretch'
+    },
     indivDefects: null,
+
     launch: function() {
-      this._loadData(-90);
+      this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+
+      this.add(
+        {
+          // Turns free-form text (e.g. 30days) into bonafide Ext objects 
+          // to which we can inherit tons-o-methods
+          xtype: 'container',
+          itemId: 'daySelection',
+          renderTpl: '<span id="{id}-s30">30 days</span>  |  <span id="{id}-s60">60 days</span>  |  <span id="{id}-s90">90 days</span>',
+          childEls: ["s30", "s60", "s90"],
+          listeners: {
+            scope: this,
+            afterrender: function(cmp) {
+                // set defaults for initial loading
+                cmp.s30.addCls('selected');
+                cmp.s60.addCls('notselected');
+                cmp.s90.addCls('notselected');
+              
+              // click event handlers
+                cmp.s30.on('click', function(eventObj) {
+                    //select the "30" label, deselect the other labels
+                    //check to see if 30 is already the enabled label, is so just no-op
+                    if(this.down("#daySelection").s30.hasCls('selected') ){
+                        return;
+                    }
+                    console.log(30); 
+                    // update labels appropriately
+                    this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+                    this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                    this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                    this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+              }, this );
+              
+              cmp.s60.on('click', function() {
+                 if(this.down("#daySelection").s60.hasCls('selected')){
+                        return;
+                 }
+                console.log('60', this);
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                /* FIXME - need to re-enable opacity on load
+                this.down("#bigNumber").animate({
+                  duration: 2000,
+                  keyframes: {
+                    25: { opacity: 50 },
+                    50: { opacity: 25 },
+                    75: { opacity: 15 },
+                    100: { opacity: 0 }
+                  }
+                });
+                */
+
+                this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+              }, this);
+              
+              cmp.s90.on('click', function() {
+                  if(this.down("#daySelection").s90.hasCls('selected')) {
+                      return;
+                  }
+                console.log('90');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+              }, this);
+            }
+          },
+          style: {
+            padding: 10,    // TODO: add bit of padding around 30/60/90
+            textAlign: 'center'
+
+          }
+        }
+
+      );
     },
 
     // for every element in the store (e.g. 100), slot it into a data structure
@@ -143,6 +228,7 @@ Ext.define('DefectTrendRemixedApp', {
          this.add({
             xtype: 'rallygrid',
             store: customStore,
+
             columnCfgs: [
                 {   
                     text: 'Defect ID', dataIndex: 'FormattedID', flex: 1,

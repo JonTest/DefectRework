@@ -10,6 +10,7 @@
 Ext.define('DefectTrendRemixedApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
+    indivDefects: null,
     launch: function() {
       this._loadData(-90);
     },
@@ -20,25 +21,55 @@ Ext.define('DefectTrendRemixedApp', {
         console.log('foo', defectSnapshotStore);
         var uniqueDefects = defectSnapshotStore.collect("_UnformattedID", false, true);
         console.log('# Unique:', uniqueDefects.length);
+        this.indivDefects = {};
+        console.log(this.indevDefects);
 
-        // outer container for our data
-        indivDefects = {};
         // prime unique entries for each defect, seeding empty storage for snapshots
         Ext.Array.each(uniqueDefects, function(defect) {
-          indivDefects[defect] = {"snapshots": []};
-        });
+          console.log('this ', this);
+          this.indivDefects[defect] = {"snapshots": []};
+        }, this);
         // loop through all (e.g. 100) snapshots and filter/push into data structure
         defectSnapshotStore.each(function(snapshot) {
-          indivDefects[snapshot.get("_UnformattedID")].snapshots.push(snapshot)
+          this.indivDefects[snapshot.get("_UnformattedID")].snapshots.push(snapshot);
+        }, this);
+        
+        this._fetchWholeDefects();
+        
+    }, //End _bucketData
+    
+    _fetchWholeDefects: function() {
+        var uniqueDefects = Ext.Object.getKeys( this.indivDefects);
+        var defectQueryFilter = Ext.create('Rally.data.QueryFilter', {
+            property: 'ObjectID',
+            operator: '=',
+            value: uniqueDefects.pop()
         });
 
-        for (defectId in indivDefects) {
-            defectMeta = indivDefects[defectId];
-            defectMeta.Name = defectMeta.snapshots[0].get("Name");   // TODO: consider most recent entry?
-        }
+        // build querie of or'd ids
+        Ext.Array.each(uniqueDefects, function(uniqueDefect) {
+            var query = new Rally.data.QueryFilter( {
+            property: 'ObjectID',
+            operator: '=',
+            value: uniqueDefect
+            });
 
-        console.log(indivDefects);
-    },
+            defectQueryFilter = defectQueryFilter.or(query);
+
+        });
+        
+        Ext.create('Rally.data.WsapiDataStore', {
+            model: 'Defect',
+            fetch: ['Name, State, _ref'],
+            filters: defectQueryFilter,
+            listeners: {
+                load: function(store, data, success) {
+                    //TODO load state, name, url
+                } //End load
+            }  // End listeners     
+          }); // End Ext.Create 
+        }, // End _fetchWholeDefects
+    
     _loadData: function(daysShift) {
          var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysShift);
          var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
@@ -81,10 +112,33 @@ Ext.define('DefectTrendRemixedApp', {
                 operator: '>',
                 value: daysAgoIsoString
             }
-          ] // End filters
+          ], // End filters
+          sorters: [
+              {
+                  property: "_id",
+                  direction: "ascending"
+              }
+          ]
         }); //End EXT.create 
 
-    }
+    }, // End _loadData
+    _loadGrid: function(metaArray){
+         var customStore = Ext.create('Rally.data.custom.Store', {
+             data: metaArray
+         } );
+         this.add({
+            xtype: 'rallygrid',
+            store: customStore,
+            columnCfgs: [
+                {
+                    text: 'Name', dataIndex: 'Name', flex: 1
+                },
+                {
+                    text: 'State', dataIndex: 'State'
+                }
+            ]
+        });
+    } //End _loadGrid
 });
 
 

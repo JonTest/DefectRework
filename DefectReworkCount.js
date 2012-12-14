@@ -1,4 +1,4 @@
-Ext.define('DefectTrendRemixedApp', {
+Ext.define('DefectReworkCountApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
     statics: {
@@ -93,7 +93,6 @@ Ext.define('DefectTrendRemixedApp', {
     }, // End _loadData
     
     _onDaysBackChanged: function(daysShift, sender) {
-
       // prevent consuming own messages
       if (sender === this) {
         console.log("Message received from myself");

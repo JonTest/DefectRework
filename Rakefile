@@ -25,22 +25,18 @@ task :new, :app_name, :sdk_version, :server do |t, args|
 end
 
 desc "Build a deployable app which includes all JavaScript and CSS resources inline"
-task :build => [:jslint] do
-  puts "Building App..."
+task :build, [:app_name] => [:jslint] do |t, args|
+  app_name = args[:app_name]
+  puts "Building App #{app_name}..."
   Dir.chdir(Rake.original_dir)
-  Rally::AppSdk::AppTemplateBuilder.new(get_config_from_file).build_app_html
+  Rally::AppSdk::AppTemplateBuilder.new(get_config_from_file(app_name)).build_app_html
 end
 
 desc "Build a debug version of the app, useful for local development"
-task :debug do
+task :debug, :app_name do |t, args|
+  app_name = args[:app_name]
   Dir.chdir(Rake.original_dir)
-  Rally::AppSdk::AppTemplateBuilder.new(get_config_from_file).build_app_html(true)
-end
-
-desc "Clean all generated output"
-task :clean do
-  Dir.chdir(Rake.original_dir)
-  remove_files Rally::AppSdk::AppTemplateBuilder.get_auto_generated_files
+  Rally::AppSdk::AppTemplateBuilder.new(get_config_from_file(app_name)).build_app_html(true)
 end
 
 desc "Deploy an app to a Rally server"
@@ -59,7 +55,7 @@ namespace "deploy" do
   desc "Deploy a debug app to a Rally server"
   task :debug => ["rake:debug"] do
     config = get_config_from_file
-    app_filename = Rally::AppSdk::AppTemplateBuilder::HTML_DEBUG
+    app_filename = config.html_debug_file
     deployr = Rally::AppSdk::Deployr.new(config, app_filename)
     deployr.deploy
   end
@@ -67,7 +63,7 @@ namespace "deploy" do
   desc "Display deploy information"
   task :info do
     config = get_config_from_file
-    app_filename = Rally::AppSdk::AppTemplateBuilder::HTML
+    app_filename = config.html_file
     deployr = Rally::AppSdk::Deployr.new(config, app_filename)
     deployr.info
   end
@@ -195,7 +191,7 @@ module Rally
         puts "> Uploaded code to '#{@app_name}' page"
 
         write_local_html_app
-        puts "* Local Test File: #{Rally::AppSdk::AppTemplateBuilder::HTML_LOCAL}"
+        puts "* Local Test File: #{@config.html_local_file}"
         puts "* Remote Test URL:#{@server}/#/#{@project_oid}/custom/#{@page_oid}"
         puts "Finished!"
       end
@@ -353,7 +349,7 @@ module Rally
       end
 
       def write_local_html_app
-        filename = Rally::AppSdk::AppTemplateBuilder::HTML_LOCAL
+        filename = @config.html_local_file
         app_width_default = 1024
         scope_up = false
         scope_down = false
@@ -498,20 +494,9 @@ module Rally
     ## template files.
     class AppTemplateBuilder
 
-      CONFIG_FILE = "config.json"
-      DEPLOY_FILE = "deploy.json"
       GITIGNORE_FILE = ".gitignore"
-      DEPLOY_DIR = 'deploy'
-      JAVASCRIPT_FILE = "App.js"
       CSS_FILE = "app.css"
-      HTML = "#{DEPLOY_DIR}/App.html"
-      HTML_DEBUG = "App-debug.html"
-      HTML_LOCAL = "App-local.html"
       CLASS_NAME = "CustomApp"
-
-      def self.get_auto_generated_files
-        [HTML, HTML_DEBUG]
-      end
 
       def initialize(config)
         @config = config
@@ -520,14 +505,13 @@ module Rally
       def build
         fail_if_file_exists get_template_files
 
-        @config.javascript = JAVASCRIPT_FILE
         @config.css = CSS_FILE
         @config.class_name = CLASS_NAME
 
-        create_file_from_template CONFIG_FILE, Rally::AppTemplates::CONFIG_TPL
-        create_file_from_template DEPLOY_FILE, Rally::AppTemplates::DEPLOY_TPL
+        create_file_from_template @config.config_file, Rally::AppTemplates::CONFIG_TPL
+        create_file_from_template @config.deploy_file, Rally::AppTemplates::DEPLOY_TPL
         create_file_from_template GITIGNORE_FILE, Rally::AppTemplates::GITIGNORE_TPL
-        create_file_from_template JAVASCRIPT_FILE, Rally::AppTemplates::JAVASCRIPT_TPL, {:escape => true}
+        create_file_from_template @config.javascript_file, Rally::AppTemplates::JAVASCRIPT_TPL, {:escape => true}
         create_file_from_template CSS_FILE, Rally::AppTemplates::CSS_TPL
       end
 
@@ -537,7 +521,7 @@ module Rally
         assure_deploy_directory_exists()
 
         if file.nil?
-          file = debug ? HTML_DEBUG : HTML
+          file = debug ? @config.html_debug_file : @config.html_file
         end
         template = debug ? Rally::AppTemplates::HTML_DEBUG_TPL : Rally::AppTemplates::HTML_TPL
         template = populate_template_with_resources(template,
@@ -565,11 +549,11 @@ module Rally
       private
 
       def assure_deploy_directory_exists
-        mkdir DEPLOY_DIR unless  File.exists?(DEPLOY_DIR)
+        mkdir 'deploy' unless  File.exists?('deploy')
       end
 
       def get_template_files
-        [CONFIG_FILE, DEPLOY_FILE, JAVASCRIPT_FILE, CSS_FILE, HTML_DEBUG, HTML_LOCAL]
+        [@config.config_file, @config.deploy_file, @config.javascript_file, CSS_FILE, @config.html_debug_file, @config.html_local_file]
       end
 
       def create_file_from_template(file, template, opts = {})
@@ -644,6 +628,8 @@ module Rally
       attr_reader :name, :sdk_version, :server
       attr_accessor :javascript, :css, :class_name
       attr_accessor :deploy_server, :username, :password, :project, :project_oid, :page_oid, :panel_oid
+      attr_accessor :config_file, :deploy_file, :javascript_file
+      attr_accessor :html_file, :html_debug_file, :html_local_file
 
       def self.from_config_file(config_file, deploy_file)
         unless File.exist? config_file
@@ -683,6 +669,12 @@ module Rally
         config.project = project
         config.page_oid = page_oid
         config.panel_oid = panel_oid
+        config.config_file = config_file
+        config.deploy_file = deploy_file
+        config.javascript_file = name + '.js'
+        config.html_file = File.join('deploy', name + '.html')
+        config.html_debug_file = File.join(name + '-debug.html')
+        config.html_local_file = File.join(name + '-local.html')
         config
       end
 
@@ -740,8 +732,8 @@ module Rally
           end
         end
         unless class_name_valid
-          msg = "The 'className' property '#{class_name}' in #{Rally::AppSdk::AppTemplateBuilder::CONFIG_FILE} was not used when defining your app.\n" +
-              "Please make sure that the 'className' property in #{Rally::AppSdk::AppTemplateBuilder::CONFIG_FILE} and the class name you use to define your app match!"
+          msg = "The 'className' property '#{class_name}' in config file was not used when defining your app.\n" +
+              "Please make sure that the 'className' property in config file and the class name you use to define your app match!"
           raise Exception.new(msg)
         end
 
@@ -950,11 +942,11 @@ STYLE_BLOCK    </style>
 
     GITIGNORE_TPL = <<-END
 # Ignore login credentials
-#{Rally::AppSdk::AppTemplateBuilder::DEPLOY_FILE}
+config/*.deploy.json
 # Ignore debug build version of App
-#{Rally::AppSdk::AppTemplateBuilder::HTML_DEBUG}
+*-debug.html
 # Ignore 'local' build version of App
-#{Rally::AppSdk::AppTemplateBuilder::HTML_LOCAL}
+*-local.html
 #Ignore All hidden files.
 .*
     END
@@ -962,9 +954,9 @@ STYLE_BLOCK    </style>
 end
 
 ## Helpers
-def get_config_from_file
-  config_file = Rally::AppSdk::AppTemplateBuilder::CONFIG_FILE
-  deploy_file = Rally::AppSdk::AppTemplateBuilder::DEPLOY_FILE
+def get_config_from_file(app_name)
+  config_file = File.join('config', app_name + ".config.json")
+  deploy_file = File.join('config', app_name + ".deploy.json")
   Rally::AppSdk::AppConfig.from_config_file(config_file, deploy_file)
 end
 

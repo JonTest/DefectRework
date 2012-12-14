@@ -1,7 +1,11 @@
-Ext.define('DefectTrendRemixedApp', {
+Ext.define('DefectReworkChartApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
-
+    statics: {
+        ThirtyDaysBack: -30,
+        SixtyDaysBack: -60,
+        NinetyDaysBack: -90
+    },
     _loadFilters: function() {
       // Add 30/60/90 links
       this.add(
@@ -43,17 +47,6 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                /* FIXME - need to re-enable opacity on load
-                this.down("#bigNumber").animate({
-                  duration: 2000,
-                  keyframes: {
-                    25: { opacity: 50 },
-                    50: { opacity: 25 },
-                    75: { opacity: 15 },
-                    100: { opacity: 0 }
-                  }
-                });
-                */
 
                 this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
               }, this);
@@ -173,8 +166,61 @@ Ext.define('DefectTrendRemixedApp', {
       this.add(chart);
 
     },
+    _loadData: function(daysShift) {
+      console.log("Reloading Data " + daysShift);
+    },
+    _onDaysBackChanged: function(daysShift, sender) {
+
+      console.log("GOT THIS");
+      // prevent consuming own messages
+      /* FIXME - didn't work for demo
+      if (sender === this) {
+        return;
+      }
+      */
+
+      // REFACTOR: copied; need to share
+      if (daysShift == -30) {
+        //select the "30" label, deselect the other labels
+        //check to see if 30 is already the enabled label, is so just no-op
+        if(this.down("#daySelection").s30.hasCls('selected') ){
+            return;
+        }
+        console.log(30); 
+        // update labels appropriately
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+        //Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+        } else if (daysShift == -60) {
+         if(this.down("#daySelection").s60.hasCls('selected')){
+                return;
+         }
+        console.log('60', this);
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+
+        this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+        //Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+      } else if (daysShift == -90) {
+        if(this.down("#daySelection").s90.hasCls('selected')) {
+              return;
+          }
+        console.log('90');
+        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
+        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
+        this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+        //Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+      }
+    },
+
     launch: function() {
+      this._loadFilters();
       this._loadChart();
+      Rally.environment.getMessageBus().subscribe('DefectTrendRemixedApp.daysShifted', this._onDaysBackChanged, this);
     }
 });
     

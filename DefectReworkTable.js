@@ -1,6 +1,4 @@
-
-
-Ext.define('DefectTrendRemixedApp', {
+Ext.define('DefectReworkTableApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
     statics: {
@@ -231,6 +229,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+                console.log("publish 30" + DefectTrendRemixedApp.ThirtyDaysBack);
                 Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
               }, this );
               
@@ -244,6 +243,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
 
                 this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+                console.log("publish 60");
                 Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
               }, this);
               

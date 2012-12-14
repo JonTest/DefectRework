@@ -41,7 +41,7 @@ Ext.define('DefectTrendRemixedApp', {
         this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
         this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
         this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
-      } else if (daysShift == -60) {
+        } else if (daysShift == -60) {
          if(this.down("#daySelection").s60.hasCls('selected')){
                 return;
          }
@@ -219,18 +219,19 @@ Ext.define('DefectTrendRemixedApp', {
                 cmp.s90.addCls('notselected');
               
               // click event handlers
-                cmp.s30.on('click', function(eventObj) {
-                    //select the "30" label, deselect the other labels
-                    //check to see if 30 is already the enabled label, is so just no-op
-                    if(this.down("#daySelection").s30.hasCls('selected') ){
-                        return;
-                    }
-                    console.log(30); 
-                    // update labels appropriately
-                    this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
-                    this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                    this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                    this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+              cmp.s30.on('click', function(eventObj) {
+                //select the "30" label, deselect the other labels
+                //check to see if 30 is already the enabled label, is so just no-op
+                if(this.down("#daySelection").s30.hasCls('selected') ){
+                    return;
+                }
+                console.log(30); 
+                // update labels appropriately
+                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
+                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
+                this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
               }, this );
               
               cmp.s60.on('click', function() {
@@ -243,6 +244,7 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
 
                 this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
               }, this);
               
               cmp.s90.on('click', function() {
@@ -254,13 +256,13 @@ Ext.define('DefectTrendRemixedApp', {
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
               }, this);
             }
           },
           style: {
             padding: 10,    // TODO: add bit of padding around 30/60/90
             textAlign: 'center'
-
           }
         }
 

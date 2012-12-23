@@ -62,33 +62,25 @@ Ext.define('DefectReworkCountApp', {
         
         hydrate: ['State', '_PreviousValues'],
         fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
-        filters: [
-          {
-              property: '_TypeHierarchy',
-              operator: 'in',
-              value: ['Defect']
-          },
-          {
-              property: 'Project',
-              operator: '=',
-              value: this.getContext().getProject().ObjectID
-          },
-          {
-              property: 'State',
-              operator: '<',
-              value: 'Closed'
-          },
-          {
-              property: '_PreviousValues.State',
-              operator: '=',
-              value: 'Closed' 
-          },
-          {
-              property: '_ValidFrom',
-              operator: '>',
-              value: daysAgoIsoString
-          }
-        ] // End filters
+        rawFind: {
+           $and: [
+                    { 
+                        $or: [
+                          { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
+                          { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
+                       ]   
+                    },
+                    {
+                      _TypeHierarchy: { $in: ['Defect' ] }
+                    },
+                    {
+                      Project : this.getContext().getProject().ObjectID
+                    },
+                    {
+                      _ValidFrom: { $gt : daysAgoIsoString }
+                    }
+                ]
+        } // End filters
       }); //End EXT.create
     }, // End _loadData
     

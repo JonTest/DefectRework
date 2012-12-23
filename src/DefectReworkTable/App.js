@@ -15,8 +15,8 @@ Ext.define('DefectReworkTableApp', {
     launch: function() {
 
       this._initGrid();
-      this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
-      Rally.environment.getMessageBus().subscribe('DefectTrendRemixedApp.daysShifted', this._onDaysBackChanged, this);
+      this._loadData(DefectReworkTableApp.ThirtyDaysBack);
+      Rally.environment.getMessageBus().subscribe('DefectReworkTableApp.daysShifted', this._onDaysBackChanged, this);
     },
 
     _onDaysBackChanged: function(daysShift, sender) {
@@ -38,7 +38,7 @@ Ext.define('DefectReworkTableApp', {
         this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
         this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
         this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
+        this._loadData(DefectReworkTableApp.ThirtyDaysBack);
         } else if (daysShift == -60) {
          if(this.down("#daySelection").s60.hasCls('selected')){
                 return;
@@ -48,7 +48,7 @@ Ext.define('DefectReworkTableApp', {
         this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
         this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
 
-        this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+        this._loadData(DefectReworkTableApp.SixtyDaysBack);
       } else if (daysShift == -90) {
         if(this.down("#daySelection").s90.hasCls('selected')) {
               return;
@@ -57,7 +57,7 @@ Ext.define('DefectReworkTableApp', {
         this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
         this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
         this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
+        this._loadData(DefectReworkTableApp.NinetyDaysBack);
       }
     },
     // for every element in the store (e.g. 100), slot it into a data structure
@@ -228,9 +228,9 @@ Ext.define('DefectReworkTableApp', {
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._loadData(DefectTrendRemixedApp.ThirtyDaysBack);
-                console.log("publish 30" + DefectTrendRemixedApp.ThirtyDaysBack);
-                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+                this._loadData(DefectReworkTableApp.ThirtyDaysBack);
+                console.log("publish 30" + DefectReworkTableApp.ThirtyDaysBack);
+                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
               }, this );
               
               cmp.s60.on('click', function() {
@@ -242,9 +242,9 @@ Ext.define('DefectReworkTableApp', {
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
 
-                this._loadData(DefectTrendRemixedApp.SixtyDaysBack);
+                this._loadData(DefectReworkTableApp.SixtyDaysBack);
                 console.log("publish 60");
-                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
               }, this);
               
               cmp.s90.on('click', function() {
@@ -255,8 +255,8 @@ Ext.define('DefectReworkTableApp', {
                 this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
                 this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
                 this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._loadData(DefectTrendRemixedApp.NinetyDaysBack);
-                Rally.environment.getMessageBus().publish('DefectTrendRemixedApp.daysShifted', DefectTrendRemixedApp.ThirtyDaysBack, this);
+                this._loadData(DefectReworkTableApp.NinetyDaysBack);
+                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
               }, this);
             }
           },

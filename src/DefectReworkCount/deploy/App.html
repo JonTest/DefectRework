@@ -7,6 +7,12 @@
 
     <script type="text/javascript">
         Rally.onReady(function() {
+            //
+            // Rally App: Defect Rework Count
+            //
+            // Description: This app shows a count of defects who's state has 'thrashed' between
+            //              two values (e.g. Closed to Open).
+            //
             Ext.define('DefectReworkCountApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
@@ -106,8 +112,9 @@
                     }
                   });
                 },
-            
+                // App entry point
                 launch: function() {
+            
                     // Register what should happen when 30/60/90 links are clicked
                     this.down('#dayRangePicker').on({
                       scope: this,

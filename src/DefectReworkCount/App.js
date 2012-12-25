@@ -1,3 +1,9 @@
+//
+// Rally App: Defect Rework Count
+//
+// Description: This app shows a count of defects who's state has 'thrashed' between
+//              two values (e.g. Closed to Open).
+//
 Ext.define('DefectReworkCountApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',

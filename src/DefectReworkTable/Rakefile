@@ -615,7 +615,7 @@ module Rally
             gsub("APP_TITLE", @config.name).
             gsub("APP_SDK_VERSION", @config.sdk_version).
             gsub("APP_SERVER", @config.server).
-            gsub("APP_SDK_PATH", debug ? @config.sdk_debug_path : @config.sdk_path).
+            gsub("APP_SDK_PATH", 1 ? @config.sdk_debug_path : @config.sdk_path).
             gsub("DEFAULT_APP_JS_FILE", list_to_quoted_string(@config.javascript)).
             gsub("DEFAULT_APP_CSS_FILE", list_to_quoted_string(@config.css)).
             gsub("CLASS_NAME", @config.class_name)

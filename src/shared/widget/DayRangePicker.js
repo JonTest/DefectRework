@@ -8,7 +8,6 @@
 //   defaultSelection: ['30'|'60'|'90']     sets which option is initially selected; default 30
 //   autoLoadSelection: [true|false]        automatically fire click event of default selection; defaults false
 Ext.define('DayRangePicker', {
-
   extend: 'Ext.Component',
   alias: 'widget.dayrangepicker',
   statics: {  // constants representing selected values
@@ -36,7 +35,9 @@ Ext.define('DayRangePicker', {
   renderTpl: '<span id="{id}-s30">30 days</span>  |  <span id="{id}-s60">60 days</span>  |  <span id="{id}-s90">90 days</span>',
   childEls: ["s30", "s60", "s90"],
   style: {
-    textAlign: 'center'
+    textAlign: 'center',
+    paddingTop: '5px',
+    paddingBottom: '5px;'
   },
 
   // toggle view of all links depending on which is selected; also fire message to other 30/60/90 widgets
@@ -86,8 +87,6 @@ Ext.define('DayRangePicker', {
   _onRangeChanged: function(dayRange, source) {
       // skip own range change request messages
       if (source === this) { return; };
-
-      console.debug("Day range change request received: ", dayRange);
 
       switch(dayRange) {
         case DayRangePicker.THIRTY:

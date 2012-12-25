@@ -1,76 +1,34 @@
+//
+// Rally App: Defect Rework Table
+//
+// Description: This app shows a table of defects who's state has 'thrashed' between
+//              two values (e.g. Closed to Open).
+//
 Ext.define('DefectReworkTableApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
-    statics: {
-        ThirtyDaysBack: -30,
-        SixtyDaysBack: -60,
-        NinetyDaysBack: -90
-    },
+    items: [
+      {
+        xtype: 'dayrangepicker',
+        itemId: 'dayRangePicker',
+        defaultSelection: '30',   // 30|60|90
+        autoLoadSelection: true
+      }
+    ],
     layout: {
       type: 'vbox',
       align: 'stretch'
     },
     indivDefects: null,
-
-    launch: function() {
-
-      this._initGrid();
-      this._loadData(DefectReworkTableApp.ThirtyDaysBack);
-      Rally.environment.getMessageBus().subscribe('DefectReworkTableApp.daysShifted', this._onDaysBackChanged, this);
-    },
-
-    _onDaysBackChanged: function(daysShift, sender) {
-
-      // prevent consuming own messages
-      if (sender === this) {
-        return;
-      }
-
-      // REFACTOR: copied; need to share
-      if (daysShift == -30) {
-        //select the "30" label, deselect the other labels
-        //check to see if 30 is already the enabled label, is so just no-op
-        if(this.down("#daySelection").s30.hasCls('selected') ){
-            return;
-        }
-        console.log(30); 
-        // update labels appropriately
-        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
-        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this._loadData(DefectReworkTableApp.ThirtyDaysBack);
-        } else if (daysShift == -60) {
-         if(this.down("#daySelection").s60.hasCls('selected')){
-                return;
-         }
-        console.log('60', this);
-        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
-        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-
-        this._loadData(DefectReworkTableApp.SixtyDaysBack);
-      } else if (daysShift == -90) {
-        if(this.down("#daySelection").s90.hasCls('selected')) {
-              return;
-          }
-        console.log('90');
-        this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
-        this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-        this._loadData(DefectReworkTableApp.NinetyDaysBack);
-      }
-    },
     // for every element in the store (e.g. 100), slot it into a data structure
     // key'd by the unique defect id.
     _bucketData: function(defectSnapshotStore) {
-        console.log('foo', defectSnapshotStore);
         var uniqueDefects = defectSnapshotStore.collect("ObjectID", false, true);
         console.log('# Unique:', uniqueDefects.length);
         this.indivDefects = {};
 
         // prime unique entries for each defect, seeding empty storage for snapshots
         Ext.Array.each(uniqueDefects, function(defect) {
-          console.log('this ', this);
           this.indivDefects[defect] = {"snapshots": []};
         }, this);
         // loop through all (e.g. 100) snapshots and filter/push into data structure
@@ -80,7 +38,7 @@ Ext.define('DefectReworkTableApp', {
         
         this._fetchWholeDefects();
         
-    }, //End _bucketData
+    },
     
     _fetchWholeDefects: function() {
         var uniqueDefects = Ext.Object.getKeys( this.indivDefects);
@@ -118,55 +76,55 @@ Ext.define('DefectReworkTableApp', {
                         this.indivDefects[defect.get('ObjectID')].FormattedID = defect.get('FormattedID')
                     }, this);
                     this._updateGrid();
-                } //End load
-            }  // End listeners     
-          }); // End Ext.Create ;
-        }, // End _fetchWholeDefects
-    
-    _loadData: function(daysShift) {
-         var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysShift);
-         var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
-         Ext.create('Rally.data.lookback.SnapshotStore', {
-           context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
-           autoLoad: true, 
-           listeners: {
-              scope: this,
-              load: function(store, data, success) {
-              console.log("Snapshot Count:", store.count());
-              this._bucketData(store);
+                }
             }
-          },
-          
-          hydrate: ['State', '_PreviousValues'],
-          fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
-          rawFind: {
-           $and: [
-                    { 
-                        $or: [
-                          { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
-                          { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
-                       ]   
-                    },
-                    {
-                      _TypeHierarchy: { $in: ['Defect' ] }
-                    },
-                    {
-                      Project : this.getContext().getProject().ObjectID
-                    },
-                    {
-                      _ValidFrom: { $gt : daysAgoIsoString }
-                    }
-                ]
-          }, // End filters
-          sorters: [
-              {
-                  property: "_id",
-                  direction: "ascending"
-              }
-          ]
-        }); //End EXT.create 
-
-    }, // End _loadData
+          });
+        },
+    
+    _loadData: function(dayRange) {
+      var daysBack = -dayRange;    // negative value; need to query 'back' that many days
+      // convert # days back to ISO date string for query
+      var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysBack);
+      var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
+      Ext.create('Rally.data.lookback.SnapshotStore', {
+        context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
+        autoLoad: true, 
+        listeners: {
+           scope: this,
+           load: function(store, data, success) {
+           console.log("Snapshot Count:", store.count());
+           this._bucketData(store);
+         }
+       },
+       
+       hydrate: ['State', '_PreviousValues'],
+       fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
+       rawFind: {
+        $and: [
+                 { 
+                     $or: [
+                       { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
+                       { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
+                    ]   
+                 },
+                 {
+                   _TypeHierarchy: { $in: ['Defect' ] }
+                 },
+                 {
+                   Project : this.getContext().getProject().ObjectID
+                 },
+                 {
+                   _ValidFrom: { $gt : daysAgoIsoString }
+                 }
+             ]
+       sorters: [
+           {
+               property: "_id",
+               direction: "ascending"
+           }
+       ]
+      });
+    },
    
     _updateGrid: function() {
         var gridData = [];
@@ -186,79 +144,11 @@ Ext.define('DefectReworkTableApp', {
         // this will re-enable and show the first grid with data
         Ext.resumeLayouts(true);
     },
+
     _initGrid: function(){
 
       // prevent rendering grid until first data is retrieved and given to grid
       Ext.suspendLayouts();
-
-      // Add 30/60/90 links
-      this.add(
-        {
-          // Turns free-form text (e.g. 30days) into bonafide Ext objects 
-          // to which we can inherit tons-o-methods
-          xtype: 'container',
-          itemId: 'daySelection',
-          renderTpl: '<span id="{id}-s30">30 days</span>  |  <span id="{id}-s60">60 days</span>  |  <span id="{id}-s90">90 days</span>',
-          childEls: ["s30", "s60", "s90"],
-          listeners: {
-            scope: this,
-            afterrender: function(cmp) {
-                // set defaults for initial loading
-                cmp.s30.addCls('selected');
-                cmp.s60.addCls('notselected');
-                cmp.s90.addCls('notselected');
-              
-              // click event handlers
-              cmp.s30.on('click', function(eventObj) {
-                //select the "30" label, deselect the other labels
-                //check to see if 30 is already the enabled label, is so just no-op
-                if(this.down("#daySelection").s30.hasCls('selected') ){
-                    return;
-                }
-                console.log(30); 
-                // update labels appropriately
-                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('selected')
-                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._loadData(DefectReworkTableApp.ThirtyDaysBack);
-                console.log("publish 30" + DefectReworkTableApp.ThirtyDaysBack);
-                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
-              }, this );
-              
-              cmp.s60.on('click', function() {
-                 if(this.down("#daySelection").s60.hasCls('selected')){
-                        return;
-                 }
-                console.log('60', this);
-                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('selected')
-                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('notselected');
-
-                this._loadData(DefectReworkTableApp.SixtyDaysBack);
-                console.log("publish 60");
-                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
-              }, this);
-              
-              cmp.s90.on('click', function() {
-                if(this.down("#daySelection").s90.hasCls('selected')) {
-                      return;
-                  }
-                console.log('90');
-                this.down("#daySelection").s90.removeCls('selected').removeCls('notselected').addCls('selected')
-                this.down("#daySelection").s60.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this.down("#daySelection").s30.removeCls('selected').removeCls('notselected').addCls('notselected');
-                this._loadData(DefectReworkTableApp.NinetyDaysBack);
-                Rally.environment.getMessageBus().publish('DefectReworkTableApp.daysShifted', DefectReworkTableApp.ThirtyDaysBack, this);
-              }, this);
-            }
-          },
-          style: {
-            padding: 10,    // TODO: add bit of padding around 30/60/90
-            textAlign: 'center'
-          }
-        }
-
-      );
 
        var customStore = Ext.create('Rally.data.custom.Store', {
            data: [],
@@ -282,7 +172,26 @@ Ext.define('DefectReworkTableApp', {
               }
           ]
       });
+    },
 
-    } //End _loadGrid
+    launch: function() {
+      this._initGrid();
+
+      // Register what should happen when 30/60/90 links are clicked
+      this.down('#dayRangePicker').on({
+        scope: this,
+        on30clicked: function() {
+          this._loadData(DayRangePicker.THIRTY);
+        },
+        on60clicked: function() {
+          this._loadData(DayRangePicker.SIXTY);
+        },
+        on90clicked: function() {
+          this._loadData(DayRangePicker.NINETY);
+        }
+      });
+    },
+
+
 });
 

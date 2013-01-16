@@ -14,14 +14,14 @@ Ext.define('DefectReworkCountApp', {
             itemId: 'countDisplayAndText',
             items: [
                 {
-                  xtype: 'component',
-                  itemId: 'countDisplay',
-                  componentCls: 'reworkCountNumber',
+                    xtype: 'component',
+                    itemId: 'countDisplay',
+                    componentCls: 'reworkCountNumber',
                 },
                 {
-                  xtype: 'component',
-                  itemId: 'countDisplayText',
-                  componentCls: 'reworkCountText',
+                    xtype: 'component',
+                    itemId: 'countDisplayText',
+                    componentCls: 'reworkCountText',
                 }
             ]
         },
@@ -41,7 +41,6 @@ Ext.define('DefectReworkCountApp', {
     launch: function() {
         // Register what should happen when 30/60/90 links are clicked
         this.down('#dayRangePicker').on({
-        scope: this,
             on30clicked: function() {
                 this._loadData(DayRangePicker.THIRTY);
             },
@@ -50,7 +49,8 @@ Ext.define('DefectReworkCountApp', {
             },
             on90clicked: function() {
                 this._loadData(DayRangePicker.NINETY);
-            }
+            },
+            scope: this
         });
     },
 
@@ -85,7 +85,9 @@ Ext.define('DefectReworkCountApp', {
                 },
                 load: function(store, data, success) {
                     var uniqueDefects = store.collect("_UnformattedID", false, true);
-                    console.log('Loaded defects: [Total:', store.count(),', Unique:', uniqueDefects.length, ']');
+                    console.log('Search Context:', this.getContext().getDataContext());
+                    console.log('Loaded defects:', '[', 'Unique:', uniqueDefects.length, 'Total:', store.count(), ']');
+                    console.log('Unique defects', uniqueDefects);
                     this._updateDisplayCount(uniqueDefects.length);
                 }
             },
@@ -102,9 +104,11 @@ Ext.define('DefectReworkCountApp', {
                          {
                            _TypeHierarchy: { $in: ['Defect' ] }
                          },
+                         /*
                          {
-                           Project : this.getContext().getProject().ObjectID
+                           _ProjectHierarchy : this.getContext().getProject().ObjectID
                          },
+                         */
                          {
                            _ValidFrom: { $gt : daysAgoIsoString }
                          }

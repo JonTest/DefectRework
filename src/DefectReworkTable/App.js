@@ -48,6 +48,19 @@ Ext.define('DefectReworkTableApp', {
 
     },
 
+    // Lookup meta details for the unique defects
+    // Augment temp data structure with meta for the current state of the defect
+    //  {
+    //     1234: {
+    //          meta: {
+    //              Name: "Foo Defect",
+    //              _ref: /defect/1234,
+    //          }
+    //          snapshots: [snap1, snap2]
+    //  
+    //     }
+    //  }
+    //
     _fetchDefectDetails: function(snapshotsByDefect) {
 
         console.log("fetching defect details", snapshotsByDefect);
@@ -79,12 +92,19 @@ Ext.define('DefectReworkTableApp', {
                 scope: this,
                 load: function(store, data, success) {
                     Ext.Array.each(data, function(defect) {
-                        snapshotsByDefect[defect.get('ObjectID')].current = {
+
+                        var defectId = defect.get('ObjectID');
+
+                        snapshotsByDefect[defectId].meta = {
                             Name: defect.get('Name'),
                             State: defect.get('State'),
                             _ref: defect.get('_ref'),
                             FormattedID: defect.get('FormattedID')
                         };
+
+                        snapshotsByDefect[defectId].meta.ThrashCount = 
+                            snapshotsByDefect[defectId].snapshots.length;
+
                     }, this);
                     this._updateGrid(snapshotsByDefect);
                 }
@@ -143,7 +163,7 @@ Ext.define('DefectReworkTableApp', {
     _updateGrid: function(snapshotsByDefect) {
         var gridData = [];
         for(defect in snapshotsByDefect) {
-            var defectMeta = snapshotsByDefect[defect].current; // move data from complex object to simple array
+            var defectMeta = snapshotsByDefect[defect].meta; // move data from complex object to simple array
             gridData.push(defectMeta);
         }
 
@@ -174,7 +194,7 @@ Ext.define('DefectReworkTableApp', {
       dayRangePicker.on({
         scope: this,
         on30clicked: function() {
-          this._fetchDefectSnapshotsByRange(DayRangePicker.THIRTY);
+          this._fetchDefectSnapshotsByRange(DayRangePicker.THIRTY);     // <--- LAUNCH POINT
         },
         on60clicked: function() {
           this._fetchDefectSnapshotsByRange(DayRangePicker.SIXTY);
@@ -207,6 +227,9 @@ Ext.define('DefectReworkTableApp', {
               },
               {
                   text: 'State', dataIndex: 'State', flex: 1
+              },
+              {
+                  text: 'Thrash Count in Range', dataIndex: 'ThrashCount', flex: 1
               }
           ]
       });

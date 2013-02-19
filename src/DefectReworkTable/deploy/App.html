@@ -16,47 +16,57 @@
             Ext.define('DefectReworkTableApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
-                items: [
-                  {
-                    xtype: 'dayrangepicker',
-                    itemId: 'dayRangePicker',
-                    defaultSelection: '30',   // 30|60|90
-                    autoLoadSelection: true
-                  }
-                ],
                 layout: {
                   type: 'vbox',
                   align: 'stretch'
                 },
-                indivDefects: null,
-                // for every element in the store (e.g. 100), slot it into a data structure
-                // key'd by the unique defect id.
-                _bucketData: function(defectSnapshotStore) {
+                snapshotsByDefect: null,
+            
+                // Organize all snapshots into temp data structure key'd by unique defect id
+                //
+                //   {
+                //      1234: [ snapshot1, snapshot2, ...],
+                //      5678: [ snapshot3, snapshot4, ...],
+                //      ...
+                //   }
+                _organizeDefectSnapshots: function(defectSnapshotStore) {
+            
                     var uniqueDefects = defectSnapshotStore.collect("ObjectID", false, true);
+            
+                    console.log("Snapshot Count:", defectSnapshotStore.count());
                     console.log('# Unique:', uniqueDefects.length);
-                    this.indivDefects = {};
+            
+                    var snapshotsByDefect = {};
             
                     // prime unique entries for each defect, seeding empty storage for snapshots
+                    /* REMOVE
                     Ext.Array.each(uniqueDefects, function(defect) {
-                      this.indivDefects[defect] = {"snapshots": []};
+                      this.snapshotsByDefect[defect] = {"snapshots": []};
                     }, this);
+                    */
                     // loop through all (e.g. 100) snapshots and filter/push into data structure
                     defectSnapshotStore.each(function(snapshot) {
-                      this.indivDefects[snapshot.get("ObjectID")].snapshots.push(snapshot);
-                    }, this);
-                    
-                    this._fetchWholeDefects();
-                    
+                        var defectId = snapshot.get("ObjectID");
+                        if (!snapshotsByDefect.hasOwnProperty(defectId)) {
+                          snapshotsByDefect[defectId] = {snapshots: [snapshot]};
+                        } else {
+                          snapshotsByDefect[defectId].snapshots.push(snapshot);
+                        }
+                    });
+                    this._fetchDefectDetails(snapshotsByDefect);
+            
                 },
-                
-                _fetchWholeDefects: function() {
-                    var uniqueDefects = Ext.Object.getKeys( this.indivDefects);
+            
+                _fetchDefectDetails: function(snapshotsByDefect) {
+            
+                    console.log("fetching defect details", snapshotsByDefect);
+            
+                    var uniqueDefects = Ext.Object.getKeys(snapshotsByDefect);
                     var defectQueryFilter = Ext.create('Rally.data.QueryFilter', {
                         property: 'ObjectID',
                         operator: '=',
                         value: uniqueDefects.pop()
                     });
-            
                     // build querie of or'd ids
                     Ext.Array.each(uniqueDefects, function(uniqueDefect) {
                         var query = new Rally.data.QueryFilter( {
@@ -68,7 +78,7 @@
                         defectQueryFilter = defectQueryFilter.or(query);
             
                     });
-                    
+            
                     Ext.create('Rally.data.WsapiDataStore', {
                         model: 'Defect',
                         fetch: ['Name', 'State', '_ref','FormattedID'],
@@ -78,69 +88,71 @@
                             scope: this,
                             load: function(store, data, success) {
                                 Ext.Array.each(data, function(defect) {
-                                    console.log('defect obj id ', defect.get('ObjectID'));
-                                    this.indivDefects[defect.get('ObjectID')].Name = defect.get('Name');
-                                    this.indivDefects[defect.get('ObjectID')].State = defect.get('State');
-                                    this.indivDefects[defect.get('ObjectID')]._ref = defect.get('_ref');
-                                    this.indivDefects[defect.get('ObjectID')].FormattedID = defect.get('FormattedID')
+                                    snapshotsByDefect[defect.get('ObjectID')].current = {
+                                        Name: defect.get('Name'),
+                                        State: defect.get('State'),
+                                        _ref: defect.get('_ref'),
+                                        FormattedID: defect.get('FormattedID')
+                                    };
                                 }, this);
-                                this._updateGrid();
+                                this._updateGrid(snapshotsByDefect);
                             }
                         }
-                      });
-                    },
-                
-                _loadData: function(dayRange) {
-                  var daysBack = -dayRange;    // negative value; need to query 'back' that many days
-                  // convert # days back to ISO date string for query
-                  var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysBack);
-                  var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
-                  Ext.create('Rally.data.lookback.SnapshotStore', {
-                    context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
-                    autoLoad: true, 
-                    listeners: {
-                       scope: this,
-                       load: function(store, data, success) {
-                       console.log("Snapshot Count:", store.count());
-                       this._bucketData(store);
-                     }
-                   },
-                   
-                   hydrate: ['State', '_PreviousValues'],
-                   fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
-                   rawFind: {
-                    $and: [
-                             { 
-                                 $or: [
-                                   { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
-                                   { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
-                                ]   
-                             },
-                             {
-                               _TypeHierarchy: { $in: ['Defect' ] }
-                             },
-                             {
-                               Project : this.getContext().getProject().ObjectID
-                             },
-                             {
-                               _ValidFrom: { $gt : daysAgoIsoString }
-                             }
-                         ]
-                   }, // End filters
-                   sorters: [
-                       {
-                           property: "_id",
-                           direction: "ascending"
-                       }
-                   ]
-                  }); //End EXT.create 
+                    });
+                    console.log("fetched!", snapshotsByDefect);
+                },
             
-                }, // End _loadData
-               
-                _updateGrid: function() {
+                // Lookup all snapshots for defects in given day range (e.g. past 30 days)
+                _fetchDefectSnapshotsByRange: function(dayRange) {
+            
+                    var daysBack = -dayRange;        // negative value; need to query 'back' that many days
+                    // convert # days back to ISO date string for query
+                    var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysBack);
+                    var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
+            
+                    Ext.create('Rally.data.lookback.SnapshotStore', {
+                        context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
+                        autoLoad: true, 
+                        listeners: {
+                            scope: this,
+                            load: function(store, data, success) {
+                                this._organizeDefectSnapshots(store);
+                            }
+                        },
+                        hydrate: ['State', '_PreviousValues'],
+                        fetch:    ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
+                        rawFind: {
+                            $and: [
+                                {
+                                    $or: [
+                                        { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
+                                        { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
+                                    ]
+                                },
+                                {
+                                    _TypeHierarchy: { $in: ['Defect' ] }
+                                },
+                                {
+                                    Project : this.getContext().getProject().ObjectID
+                                },
+                                {
+                                    _ValidFrom: { $gt : daysAgoIsoString }
+                                }
+                            ]
+                        },
+                        sorters: [
+                            {
+                                property: "_id",
+                                direction: "ascending"
+                            }
+                        ]
+                    });
+                },
+            
+                _updateGrid: function(snapshotsByDefect) {
                     var gridData = [];
-                    for(defect in this.indivDefects) {
-                        var defectMeta = this.indivDefects[defect]; // move data from complex object to simple array
+                    for(defect in snapshotsByDefect) {
+                        var defectMeta = snapshotsByDefect[defect].current; // move data from complex object to simple array
                         gridData.push(defectMeta);
                     }
             
@@ -150,28 +162,52 @@
             
                     // find & populate grid
                    this.down('#defectGrid').reconfigure(customStore);
-                    
+            
                     // grid layout hidden on load to prevent showing empty grid and waiting few secs to get data
                     // this will re-enable and show the first grid with data
-                    Ext.resumeLayouts(true);
+                    // FIXME need this?  use load mask?
+                    // Ext.resumeLayouts(true);
                 },
             
-                _initGrid: function(){
+                // Create visual components and lay them out
+                _doLayout: function(){
+            
+                  var dayRangePicker = Ext.create('DayRangePicker', {
+                    xtype: 'dayrangepicker',
+                    itemId: 'dayRangePicker',
+                    defaultSelection: '30',   // 30|60|90
+                    autoLoadSelection: true
+                  });
+            
+                  // Register what should happen when 30/60/90 links are clicked
+                  dayRangePicker.on({
+                    scope: this,
+                    on30clicked: function() {
+                      this._fetchDefectSnapshotsByRange(DayRangePicker.THIRTY);
+                    },
+                    on60clicked: function() {
+                      this._fetchDefectSnapshotsByRange(DayRangePicker.SIXTY);
+                    },
+                    on90clicked: function() {
+                      this._fetchDefectSnapshotsByRange(DayRangePicker.NINETY);
+                    }
+                  });
             
                   // prevent rendering grid until first data is retrieved and given to grid
-                  Ext.suspendLayouts();
+                  // FIXME: need this?  use mask instead prior to load?
+                  // Ext.suspendLayouts();
             
                    var customStore = Ext.create('Rally.data.custom.Store', {
                        data: [],
                    } );
             
-                   this.add({
+                   var defectGrid = Ext.create('Rally.ui.grid.Grid', {
                       xtype: 'rallygrid',
                       itemId: 'defectGrid',
                       store: customStore,
             
                       columnCfgs: [
-                          {   
+                          {
                               text: 'Defect ID', dataIndex: 'FormattedID', flex: 1,
                               xtype: 'templatecolumn', tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
                           },
@@ -184,27 +220,13 @@
                       ]
                   });
             
+                  this.add(dayRangePicker);
+                  this.add(defectGrid);
                 },
             
                 launch: function() {
-                  this._initGrid();
-            
-                  // Register what should happen when 30/60/90 links are clicked
-                  this.down('#dayRangePicker').on({
-                    scope: this,
-                    on30clicked: function() {
-                      this._loadData(DayRangePicker.THIRTY);
-                    },
-                    on60clicked: function() {
-                      this._loadData(DayRangePicker.SIXTY);
-                    },
-                    on90clicked: function() {
-                      this._loadData(DayRangePicker.NINETY);
-                    }
-                  });
-                },
-            
-            
+                  this._doLayout();
+                }
             });
             
             //

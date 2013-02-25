@@ -129,13 +129,14 @@
                     // convert # days back to ISO date string for query
                     var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysBack);
                     var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
-            
                     Ext.create('Rally.data.lookback.SnapshotStore', {
                         context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
                         autoLoad: true, 
                         listeners: {
                             scope: this,
                             load: function(store, data, success) {
+                              console.log('context', this.getContext().getDataContext());
+                              console.log('data', data);
                                 this._organizeDefectSnapshots(store);
                             }
                         },
@@ -153,7 +154,7 @@
                                     _TypeHierarchy: { $in: ['Defect' ] }
                                 },
                                 {
-                                    Project : this.getContext().getProject().ObjectID
+                                    _ProjectHierarchy : this.getContext().getProject().ObjectID
                                 },
                                 {
                                     _ValidFrom: { $gt : daysAgoIsoString }

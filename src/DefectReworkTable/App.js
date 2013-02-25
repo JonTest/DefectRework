@@ -29,12 +29,6 @@ Ext.define('DefectReworkTableApp', {
 
         var snapshotsByDefect = {};
 
-        // prime unique entries for each defect, seeding empty storage for snapshots
-        /* REMOVE
-        Ext.Array.each(uniqueDefects, function(defect) {
-          this.snapshotsByDefect[defect] = {"snapshots": []};
-        }, this);
-        */
         // loop through all (e.g. 100) snapshots and filter/push into data structure
         defectSnapshotStore.each(function(snapshot) {
             var defectId = snapshot.get("ObjectID");
@@ -120,13 +114,14 @@ Ext.define('DefectReworkTableApp', {
         // convert # days back to ISO date string for query
         var daysAgo = Ext.Date.add(new Date(), Ext.Date.DAY, daysBack);
         var daysAgoIsoString = Rally.util.DateTime.toIsoString(daysAgo, true); 
-
         Ext.create('Rally.data.lookback.SnapshotStore', {
             context: this.getContext().getDataContext(), //get workspace, project info, etc from the app context
             autoLoad: true, 
             listeners: {
                 scope: this,
                 load: function(store, data, success) {
+                  console.log('context', this.getContext().getDataContext());
+                  console.log('data', data);
                     this._organizeDefectSnapshots(store);
                 }
             },
@@ -144,7 +139,7 @@ Ext.define('DefectReworkTableApp', {
                         _TypeHierarchy: { $in: ['Defect' ] }
                     },
                     {
-                        Project : this.getContext().getProject().ObjectID
+                        _ProjectHierarchy : this.getContext().getProject().ObjectID
                     },
                     {
                         _ValidFrom: { $gt : daysAgoIsoString }

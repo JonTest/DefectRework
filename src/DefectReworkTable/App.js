@@ -119,6 +119,9 @@ Ext.define('DefectReworkTableApp', {
             autoLoad: true, 
             listeners: {
                 scope: this,
+                beforeload: function(store, operation, opts) {
+                  this.setLoading(true);
+                },
                 load: function(store, data, success) {
                   console.log('context', this.getContext().getDataContext());
                   console.log('data', data);
@@ -162,12 +165,14 @@ Ext.define('DefectReworkTableApp', {
             gridData.push(defectMeta);
         }
 
-       var customStore = Ext.create('Rally.data.custom.Store', {
+        var customStore = Ext.create('Rally.data.custom.Store', {
            data: gridData,
-       } );
+        } );
+
+        this.setLoading(false);
 
         // find & populate grid
-       this.down('#defectGrid').reconfigure(customStore);
+        this.down('#defectGrid').reconfigure(customStore);
 
         // grid layout hidden on load to prevent showing empty grid and waiting few secs to get data
         // this will re-enable and show the first grid with data

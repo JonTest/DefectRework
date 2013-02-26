@@ -104,24 +104,24 @@
                         fetch:  ['_UnformattedID', 'Project', 'Name', 'State', 'Owner', '_PreviousValues'],
                         rawFind: {
                             $and: [
-                                     { 
-                                         $or: [
-                                           { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
-                                           { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
-                                        ]   
-                                     },
-                                     {
-                                       _TypeHierarchy: { $in: ['Defect' ] }
-                                     },
-                                     {
-                                       _ProjectHierarchy : this.getContext().getProject().ObjectID
-                                     },
-                                     {
-                                       _ValidFrom: { $gt : daysAgoIsoString }
-                                     }
-                                 ]
-                            }
-                    });
+                                   { 
+                                       $or: [
+                                         { State: {$lt: 'Closed'}, '_PreviousValues.State': 'Closed' },
+                                         { State: {$lt: 'Fixed' }, '_PreviousValues.State': 'Fixed' },
+                                      ]   
+                                   },
+                                   {
+                                     _TypeHierarchy: { $in: ['Defect' ] }
+                                   },
+                                   {
+                                     _ProjectHierarchy : this.getContext().getProject().ObjectID
+                                   },
+                                   {
+                                     _ValidFrom: { $gt : daysAgoIsoString }
+                                   }
+                               ]
+                          }
+                      });
                 },
             
                 // Update both the display count and text with new number given.

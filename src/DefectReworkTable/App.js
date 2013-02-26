@@ -215,6 +215,9 @@ Ext.define('DefectReworkTableApp', {
        var defectGrid = Ext.create('Rally.ui.grid.Grid', {
           xtype: 'rallygrid',
           itemId: 'defectGrid',
+          pagingToolbarCfg: {
+            pageSizes: [10, 20, 30]
+          },
           store: customStore,
 
           columnCfgs: [
